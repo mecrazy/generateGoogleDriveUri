@@ -61,6 +61,10 @@ var genGDU = function(opt){
 				this.full.csv = opt;
 				this.base.csv = this.full.csv.replace(/&output=csv/i,'&range=<replacer>&output=csv');
 			}
+			if(!this.full.csv.match(/&single=true/i)){ this.full.csv += '&single=true'; }
+			if(!this.full.csv.match(/&gid=/i)){ this.full.csv += '&gid=0'; }
+			if(!this.base.csv.match(/&single=true/i)){ this.full.csv += '&single=true'; }
+			if(!this.base.csv.match(/&gid=/i)){ this.full.csv += '&gid=0'; }
 			convertCsvToAtom.apply(this);
 			this.base.rss = this.base.atom + '&alt=rss';
 			this.full.atom = this.base.atom.replace(/\?range=.*/i,'');
@@ -71,12 +75,14 @@ var genGDU = function(opt){
 			if(opt.match(/\?range=.*/i)){
 				//Has range setting
 				this.full.rss = opt.replace(/\?range=.*&/i,'?');
+				this.full.rss = this.full.rss.replace(/\/list\//i,'/cells/');
 				this.base.rss = opt.replace(/\?range=.*&/i,'?range=<replacer>&');
 			}else{
 				//Doesn't have range setting
 				this.full.rss = opt;
 				this.base.rss = this.full.rss.replace(/\?/i,'?range=<replacer>&');
 			}
+			this.base.rss = this.base.rss.replace(/\/list\//i,'/cells/');
 			this.base.atom = this.base.rss.replace(/&alt=rss.*&/i,'');
 			convertAtomToCsv.apply(this);
 			this.full.atom = this.full.rss.replace(/\?alt=rss.*/i,'');
@@ -91,6 +97,7 @@ var genGDU = function(opt){
 				//Doesn't have range setting
 				this.full.atom = opt
 			}
+			this.full.atom = this.full.atom.replace(/\/list\//i,'/cells/');
 			this.full.rss = this.full.atom + '?alt=rss';
 			this.base.atom = this.full.atom + '?range=<replacer>';
 			this.base.rss = this.base.atom + '&alt=rss';
@@ -136,8 +143,8 @@ var genGDU = function(opt){
 	return this;
 
 	function convertAtomToCsv(url){
-		var uuid =  this.base.atom.match(/\/feeds\/cells\/.*?\//i)[0];
-		uuid = uuid.replace(/\/feeds\/cells\//i,'');
+		var uuid =  this.base.atom.match(/\/feeds\/(cells|list)\/.*?\//i)[0];
+		uuid = uuid.replace(/\/feeds\/(cells|list)\//i,'');
 		this.base.uuid = uuid.substr(0,uuid.length - 1);
 		this.base.csv = 'https://docs.google.com/spreadsheet/pub?key=' + this.base.uuid + '&single=true&gid=0&range=<replacer>&output=csv';
 	}
