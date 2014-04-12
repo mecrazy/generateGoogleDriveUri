@@ -1,3 +1,6 @@
+// URI generator for Google Spreadsheet
+// Developed by mecrazy - http://mecrazy.net
+//
 /*
 < Usage >
 //Casting ( Must be url of CSV, ATOM or RSS )
@@ -168,16 +171,3 @@ var genGDU = function(opt){
 		return colStr;
 	}
 };
-
-/*
-
-ATOM
-https://spreadsheets.google.com/feeds/cells/0AmhsIY7iHEnLdE9NTVZTNVRpeUJOMmI3dllFX2FGMkE/od6/public/basic?range=A2%3AA6
-
-RSS
-https://spreadsheets.google.com/feeds/cells/0AmhsIY7iHEnLdE9NTVZTNVRpeUJOMmI3dllFX2FGMkE/od6/public/basic?range=A2%3AA6&alt=rss
-
-CSV
-https://docs.google.com/spreadsheet/pub?key=0AmhsIY7iHEnLdE9NTVZTNVRpeUJOMmI3dllFX2FGMkE&single=true&gid=0&range=A2%3AA6&output=csv
-
-*/
