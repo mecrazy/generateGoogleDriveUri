@@ -31,13 +31,30 @@ var atom = sample.genUri('atom',{startRow:2,cols:2,rows:5,page:1}); // This styn
 //RSS
 var rss = sample.genUri('rss',{range:'A2:B6'}); // This styntax returns RSS;
 
+//If you use number style of arguments,
+//you can run callback function for control pager like below.
+var csv9 = sample.genUri('atom',{startRow:2,cols:2,rows:5,page:1},callback);
+function callback(returnObj)
+    if(returnObj.pager.prev){
+      document.getElementById('prev').style.display = 'none';
+    }else{
+      document.getElementById('prev').style.display = 'block';
+    }
+    if(returnObj.pager.next){
+      document.getElementById('next').style.display = 'none';
+    }else{
+      document.getElementById('next').style.display = 'block';
+    }
+}
+
 */
 var genGDU = function(opt){
 
-	this.defaultMode = '';
+    this.defaultMode = '';
 	this.base = {'csv':'','atom':'','rss':'','uuid':'','default':opt};
 	this.full = {'csv':'','atom':'','rss':''};
 	this.func = {};
+    this.pager = {'prev':false,'next':true};
 	if(typeof console != 'undefined'){
 		this.console = console;
 	}else{
@@ -105,7 +122,7 @@ var genGDU = function(opt){
 			this.full.csv = this.base.csv.replace(/&range=.*?&/i,'&')
 		}
 	}
-	this.genUri = function(mode,params){
+	this.genUri = function(mode,params,callbackfunc){
 		var replaceFlg = true;
 		var replacer = '';
 		if( (typeof mode == 'undefined') || (typeof params == 'undefined') ){
@@ -135,6 +152,12 @@ var genGDU = function(opt){
 			if(mode == 'csv'){ result = this.base.csv.replace('<replacer>',replacer); }
 			if(mode == 'atom'){ result = this.base.atom.replace('<replacer>',replacer); }
 			if(mode == 'rss'){ result = this.base.rss.replace('<replacer>',replacer); }
+    		if(typeof params.range == 'string'){
+        		var nextReplacer = getNextRowRange.apply(this,[replacer]);
+    		}else{
+        		var nextReplacer = getNextRowRange.apply(this,[replacer,params]);
+    		}
+			checkNextRow.apply(this,[this.base.csv.replace('<replacer>',nextReplacer),callbackfunc]);
 			return result;
 		}else{
 			return '';
@@ -176,5 +199,62 @@ var genGDU = function(opt){
 			colStr += String.fromCharCode(colNum);
 		}
 		return colStr;
+	}
+	function getNextRowRange(range,params){
+		var nextRange = {'str':'','num':''};
+		if(range.match(/%3A/i)){
+			var pos = range.search('%3A');
+			var startStr = range.substr(0,pos);
+			var endStr = range.substr(pos + 3);
+			var startNum = Number(startStr.replace(/[a-zA-Z]+/i,''));
+            if(typeof params == 'object'){
+            	this.pager.prev = (startNum > params.startRow);
+            }else{
+            	this.pager.prev = (startNum > 1);
+            }
+			nextRange.str = startStr.replace(/[0-9]+/i,'');
+			nextRange.num = (Number(endStr.replace(/[a-zA-Z]+/i,'')) + 1) + '';
+		}else{
+			var startNum = Number(range.replace(/[a-zA-Z]*?/i,''));
+            if(typeof params == 'object'){
+                this.pager.prev = (startNum > params.startRow);
+            }else{
+            	this.pager.prev = (startNum > 1);
+            }
+			nextRange.str = range.replace(/[0-9]+/i,'');
+			nextRange.num = (startNum + 1) + '';
+		}
+		return (nextRange.str + nextRange.num);
+	}
+	function checkNextRow(requestUri,callback){
+		var currentObj = this;
+		if (!window.XMLHttpRequest){
+			XMLHttpRequest = function(){
+				try{
+					return new ActiveXObject("Msxml2.XMLHTTP.6.0");
+				}catch(e){}
+				try{
+					return new ActiveXObject("Msxml2.XMLHTTP.3.0");
+				}catch(e){}
+				try{
+					return new ActiveXObject("Msxml2.XMLHTTP");
+				}catch(e){}
+				throw new Error("This browser does not support XMLHttpRequest.");
+			};
+		}
+		var xhr = new XMLHttpRequest();
+    	xhr.open('GET',requestUri,true);
+		xhr.onreadystatechange = function(){
+			if (xhr.readyState === 4 && xhr.status === 200){
+				currentObj.pager.next = (xhr.responseText != '');
+			}else{
+				currentObj.pager.next = false;
+			}
+            if(typeof callback == 'function'){
+                callback(currentObj);
+            }
+		}
+        xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        xhr.send(null);
 	}
 };
